@@ -16,8 +16,7 @@ var flagsParsed bool = false;
 
 /* what JSON file to read config values from */
 var confLocation = flag.String("conf", "./config.txt", "Config file to read from")
-/* Returns nil if flags are not parsed yet
-   @return set boolean will be true if argument is not nil */
+/* @return set boolean will be true if argument is not nil */
 func GetConfLocation() (location string, set bool) {
 	if confLocation == nil {return "", false}
 	return *confLocation, true;

@@ -17,6 +17,7 @@ func main() {
 	if !confLocationSet {log.Default().Print("No config value!"); return;}
 	log.Default().Print("Reading config value from ", configLocation);
 	
+	// Set up config 
 	config, err := conf.NewConfig(configLocation);
 	if err != nil {log.Default().Print("Error reading config: ", err); return;}
 	fmt.Println(config.GetConfigData())

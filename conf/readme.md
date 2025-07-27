@@ -18,5 +18,5 @@ There is a regex-like behavior to these paths using the `*` and `?` characters. 
 
 The `*` character matches to any number of path segments. The `?` character matches to only one segment. Here's some examples:
 
-* `HZJWwB0TAjz6pjAHosII5ofR /+16028675309/*` will allow the bearer token to access any endpoint with the phone number `+16028675309`
+* `HZJWwB0TAjz6pjAHosII5ofR /+16028675309/*` will allow the bearer token to access any endpoint with the phone number `+16028675309`.
 * `HZJWwB0TAjz6pjAHosII5ofR /+16028675309/direct/?/send` will allow the bearer token to send a direct message to anyone on that phone number.
