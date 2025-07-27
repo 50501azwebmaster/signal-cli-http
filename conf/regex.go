@@ -13,16 +13,8 @@ func splitPath(path string) []string {
 
 /* Attempts to match a request path to a set of whitelisted paths
    @return false for anything other than a valid match */
-func match(request string, matchTo []string) bool {
-	requestSplit := splitPath(request)
-	for _, matchToAttempt := range matchTo {
-		matchToAttemptSplit := splitPath(matchToAttempt);
-		if matchSegments(requestSplit, matchToAttemptSplit) {
-			return true;
-		}
-	}
-	
-	return false;
+func match(request string, matchTo string) bool {
+	return matchSegments(splitPath(request), splitPath(matchTo));
 }
 
 /* Returns false for anything other than a valid match */
