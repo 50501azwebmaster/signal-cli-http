@@ -1,6 +1,6 @@
 package subprocess
 
-/* This file manages creating the command line arguments to the subprocess */
+/* This file manages verifying/sanatizing the request and response and forwarding it to the subprocess */
 
 /* Method which module http calls to create the subprocess */
 func Run(path string, body []byte) (status int, bodyContents []byte, err error) {

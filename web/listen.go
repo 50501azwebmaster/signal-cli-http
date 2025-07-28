@@ -1,9 +1,9 @@
-package http
+package web
 
 /* This file handles listening to HTTP requests */
 
 import (
-	"signal-cli-http/conf"
+	//"signal-cli-http/auth"
 	"signal-cli-http/subprocess"
 	
 	"fmt"
@@ -30,14 +30,13 @@ func getRoot(w http.ResponseWriter, r *http.Request) {
 	bearer := authArr[0];
 	
 	// Check that the request is allowed for the path
-	if !conf.GlobalConfig.ValidateBearerKey(bearer, r.URL.Path) {
+	/*if !conf.GlobalConfig.ValidateBearerKey(bearer, r.URL.Path) {
 		w.WriteHeader(403);
 		w.Write([]byte("Bearer key not whitelisted for this path\n"))
 		return;
-	}
+	}*/
 	
-	// OK authentication wise
-	
+	// Read request body
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
 		w.WriteHeader(500);
@@ -56,8 +55,14 @@ func getRoot(w http.ResponseWriter, r *http.Request) {
 	}
 	
 	// Respond to client with status
-	w.WriteHeader(status);
-	w.Write(bodyContent);
+	if status == 0 {
+		w.WriteHeader(200);
+		w.Write(bodyContent);
+	} else {
+		w.WriteHeader(400);
+		w.Write([]byte("Program exited with status " + fmt.Sprint(status)));
+		
+	}
 	
 	// Log the request
 	log.Default().Print("HTTP Request: ", bearer, " " , r.URL.Path, " ", status)

@@ -22,12 +22,12 @@ func Parse() {
 /* module-specific variable to avoid re-parsing flags */
 var flagsParsed bool = false;
 
-/* what JSON file to read config values from */
-var confLocation = flag.String("conf", "./config.txt", "Config file to read from")
+/* what file to read the configuration */
+var authJson = flag.String("auth", "./auth.json", "Authorization file to read from")
 /* @return set boolean will be true if argument is not nil */
-func GetConfLocation() (location string, set bool) {
-	if confLocation == nil {return "", false}
-	return *confLocation, true;
+func GetAuthJson() (location string, set bool) {
+	if authJson == nil {return "", false}
+	return *authJson, true;
 }
 
 /* TCP port to bind to */

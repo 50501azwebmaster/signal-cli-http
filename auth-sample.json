@@ -1,0 +1,9 @@
+{
+	"WGV99fSwgKhdQSa89HQIGxas": [
+		{"method":"send","params":{"recipient":["+16028675309"]}},
+		{"method":"send","params":{"groupID":["67a13c3e-8d29-2539-ce8e-41129c349d6d"]}}
+	],
+	"ZQR3T6lqsvnXcgcWhpPOWWdv": [
+		{"method":"receive","params":{"envelope":{"source":"67a13c3e-8d29-2539-ce8e-41129c349d6d"}}}
+	]
+}
