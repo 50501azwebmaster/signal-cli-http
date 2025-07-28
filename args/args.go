@@ -3,13 +3,21 @@ package args
 /* This file manages declaration of, parsing of, and returning copies of
    command line arguments. */
 
-import "flag"
+import (
+	"flag"
+	"os"
+)
 
 /* Method to trigger flag parsing. Can be called multiple times safely. */
 func Parse() {
 	if (flagsParsed) {return}
 	flag.Parse();
 	flagsParsed = true;
+	
+	// Process DBUS socket location
+	if socketLocation == nil || *socketLocation == ""  {
+		*socketLocation = os.Getenv("DBUS_SYSTEM_BUS_ADDRESS");
+	}
 }
 /* module-specific variable to avoid re-parsing flags */
 var flagsParsed bool = false;
@@ -39,7 +47,7 @@ func GetSocketLocation() (port string, set bool) {
 }
 
 /* Where the signal-cli binary is */
-var binaryLocation = flag.String("binary", "", "Location of the signal-cli binary.")
+var binaryLocation = flag.String("binary", "/usr/local/bin/signal-cli", "Location of the signal-cli binary.")
 /* @return set boolean will be true if argument is not nil */
 func GetBinaryLocation() (port string, set bool) {
 	if binaryLocation == nil {return "", false}
