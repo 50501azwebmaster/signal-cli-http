@@ -51,6 +51,19 @@ func match(request any, filter any) bool {
 				// Cannot find a match for something in the filter
 				if !foundMatch {return false}
 			}
+			// And the other way around
+			for i := 0; i < len(filter.([]any)); i ++ {
+				foundMatch := false;
+				// That something matches in the request
+				for j := 0; j < len(request.([]any)); j ++ {
+					if match(filter.([]any)[i], request.([]any)[j]) {
+						foundMatch = true;
+						break
+					}
+				}
+				// Cannot find a match for something in the filter
+				if !foundMatch {return false}
+			}
 			
 			return true;
 		
