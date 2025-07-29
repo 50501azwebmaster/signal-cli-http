@@ -29,6 +29,8 @@ func Request(body map[string]any) (responseJSON string, err error) {
 		return
 	}
 	body["id"] = id;
+	// Also set JSONRPC-2.0
+	body["jsonrpc"] = "2.0";
 	
 	// Marshal JSON to bytes
 	contents, err := json.Marshal(body)
