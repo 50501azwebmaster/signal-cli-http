@@ -8,7 +8,7 @@ import (
 )
 
 /* Unmarshals a JSON into a recursive map. Returns nil on error */
-func unmarshalJSON(marshaledJSON []byte) (unmarshaled any) {
+func UnmarshalJSON(marshaledJSON []byte) (unmarshaled any) {
 	json.Unmarshal(marshaledJSON, &unmarshaled);
 	return;
 }
@@ -55,6 +55,6 @@ func match(request any, filter any) bool {
 			return true;
 		
 		// Otherwise compare the objects directly using reflect
-		default: return reflect.DeepEqual(request, filter)
+		default: return reflect.DeepEqual(request, filter);
 	}
 }

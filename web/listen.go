@@ -3,7 +3,7 @@ package web
 /* This file handles listening to HTTP requests */
 
 import (
-	//"signal-cli-http/auth"
+	"signal-cli-http/auth"
 	"signal-cli-http/subprocess"
 	
 	"fmt"
@@ -12,11 +12,9 @@ import (
 	"net/http"
 )
 
-func StartWebserver(port int) {
-	http.HandleFunc("/", getRoot)
-
-	err := http.ListenAndServe(":"+fmt.Sprint(port), nil)
-	fmt.Println(err)
+func StartWebserver(port int) error {
+	http.HandleFunc("/", getRoot);
+	return http.ListenAndServe(":"+fmt.Sprint(port), nil);
 }
 
 func getRoot(w http.ResponseWriter, r *http.Request) {
@@ -29,41 +27,44 @@ func getRoot(w http.ResponseWriter, r *http.Request) {
 	}
 	bearer := authArr[0];
 	
-	// Check that the request is allowed for the path
-	/*if !conf.GlobalConfig.ValidateBearerKey(bearer, r.URL.Path) {
-		w.WriteHeader(403);
-		w.Write([]byte("Bearer key not whitelisted for this path\n"))
-		return;
-	}*/
-	
 	// Read request body
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
 		w.WriteHeader(500);
-		w.Write([]byte("Error reading body\n"))
+		w.Write([]byte("Error reading body\n"));
 		return;
 	}
-	
-	// Call subprocess
-	status, bodyContent, err := subprocess.Run(r.URL.Path, body)
-	
-	// Error
+	// Check Authentication header
+	if !auth.Authenticate(bearer, body) {
+		w.WriteHeader(403);
+		w.Write([]byte("Bearer key not whitelisted for this request type\n"));
+		return;
+	}
+	// Attempt to unmarshal JSON
+	bodyUnmarshaled := auth.UnmarshalJSON(body);
+	if bodyUnmarshaled == nil {
+		w.WriteHeader(400);
+		w.Write([]byte("Body content is not a valid JSON"));
+		return;
+	}
+	// Type assertion
+	b, ok := bodyUnmarshaled.(map[string]any)
+	if !ok {
+		w.WriteHeader(400);
+		w.Write([]byte("Body content is not of the write format"));
+		return;
+	}
+	// Run request
+	bodyContent, err := subprocess.Request(b)
 	if err != nil {
 		w.WriteHeader(500);
 		w.Write([]byte("Internal server error: " + err.Error() + "\n"));
 		return
 	}
 	
-	// Respond to client with status
-	if status == 0 {
-		w.WriteHeader(200);
-		w.Write(bodyContent);
-	} else {
-		w.WriteHeader(400);
-		w.Write([]byte("Program exited with status " + fmt.Sprint(status)));
-		
-	}
+	w.WriteHeader(200);
+	w.Write([]byte(bodyContent));
 	
 	// Log the request
-	log.Default().Print("HTTP Request: ", bearer, " " , r.URL.Path, " ", status)
+	log.Default().Print("HTTP Request: ", bearer, " " , 200, " ", string(body))
 }

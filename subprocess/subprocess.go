@@ -1,44 +1,56 @@
 package subprocess
 
-import (
-	"signal-cli-http/args"
-
-	"errors"
-	"os/exec"
-	"strings"
-)
-
 /* This file manages calling signal-cli */
 
-/* Runs the command */
-func runCommand(arguments []string) (returnStatus int, bodyContent []byte, err error) {
-	// Get binary location
-	binary, ok := args.GetBinaryLocation();
-	if !ok {
-		err = errors.New("Binary cannot be found!");
-		return;
-	}
+import (
+	"bufio"
+	"errors"
+	"os"
+	"os/exec"
+	"sync"
 	
-	// Create command using binary location and arguments
-	command := exec.Command(binary, strings.Join(arguments, " "));
-	
-	// Duplicate pointer into command.Stdout
-	//command.Stdout = &bodyContent;
+	"github.com/creack/pty"
+)
 
-	// Run the command
-	err = command.Run();
-	if err != nil {return}
+var cmd *exec.Cmd;
+var cmdStarted = false;
+var f *os.File;
+var fLock sync.RWMutex;
+var reader *bufio.Scanner;
+
+func SetupCMD(binaryLocation string) error {
+	// Avoid double set-up
+	if cmdStarted {return errors.New("cmd already started")};
 	
-	// Extract exit code if possible
-	if exitError, ok := err.(*exec.ExitError); ok {
-		returnStatus = exitError.ExitCode();
-	} else {
-		err = errors.New("Cannot get exit code!");
-	}
+	// Create cmd object
+	cmd = exec.Command(binaryLocation, "jsonRpc");
+	if cmd == nil {return errors.New("Creating process failed!")}
 	
-	// Get output
-	bodyContent, err = command.Output();
+	// Start it
+	file, err := pty.Start(cmd);
+	f = file;
+	if err != nil {return err}
 	
-	// Named return values allow this
-	return;
+	// Set up reader object and loop
+	reader = bufio.NewScanner(f);
+	go readCMD();
+	
+	// No problem
+	return nil;
+}
+
+func readCMD() {
+	var maxCapacity int = 4096;
+	buf := make([]byte, maxCapacity);
+	reader.Buffer(buf, maxCapacity);
+	
+	for reader.Scan() {Response(reader.Text())}
+}
+
+func writeCMD(line string) (ok bool) {
+	fLock.Lock();
+	if line[len(line)-1] != '\n' {line += "\n"}
+	f.WriteString(line);
+	fLock.Unlock();
+	return true;
 }
