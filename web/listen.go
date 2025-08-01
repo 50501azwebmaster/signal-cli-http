@@ -14,16 +14,19 @@ import (
 	"time"
 )
 
+/* Starts the listener */
 func StartWebserver(port int) error {
 	http.HandleFunc("/", getRoot);
 	return http.ListenAndServe(":"+fmt.Sprint(port), nil);
 }
 
+/* Writes data to the log */
 func writeLog(method string, status int, start time.Time) {
 	duration := time.Now().Sub(start);
 	log.Default().Printf("%s %d %s", method, status, duration.String())
 }
 
+/* Handler for all requests */
 func getRoot(w http.ResponseWriter, r *http.Request) {
 	startTime := time.Now()
 	
@@ -31,8 +34,8 @@ func getRoot(w http.ResponseWriter, r *http.Request) {
 	authArr, ok := r.Header["Authentication"]
 	if (!ok) || (len(authArr) == 0) {
 		w.WriteHeader(400);
-		w.Write([]byte("Authentication header missing\n"))
-		writeLog(r.Method, 400, startTime)
+		w.Write([]byte("Authentication header missing\n"));
+		writeLog(r.Method, 400, startTime);
 		return;
 	}
 	bearer := authArr[0];
@@ -42,7 +45,7 @@ func getRoot(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		w.WriteHeader(500);
 		w.Write([]byte("Error reading body\n"));
-		writeLog(r.Method, 500, startTime)
+		writeLog(r.Method, 500, startTime);
 		return;
 	}
 	
@@ -50,7 +53,7 @@ func getRoot(w http.ResponseWriter, r *http.Request) {
 	if !auth.Authenticate(bearer, body) {
 		w.WriteHeader(403);
 		w.Write([]byte("Bearer key not whitelisted for this request type\n"));
-		writeLog(r.Method, 403, startTime)
+		writeLog(r.Method, 403, startTime);
 		return;
 	}
 	
@@ -59,7 +62,7 @@ func getRoot(w http.ResponseWriter, r *http.Request) {
 	if err := json.Unmarshal(body, &bodyUnmarshaled); err != nil {
 		w.WriteHeader(400);
 		w.Write([]byte("Body content is not a valid JSON"));
-		writeLog(r.Method, 400, startTime)
+		writeLog(r.Method, 400, startTime);
 		return;
 	}
 	
@@ -68,7 +71,7 @@ func getRoot(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		w.WriteHeader(400);
 		w.Write([]byte("Body content is not of the write format"));
-		writeLog(r.Method, 400, startTime)
+		writeLog(r.Method, 400, startTime);
 		return;
 	}
 	
@@ -79,22 +82,21 @@ func getRoot(w http.ResponseWriter, r *http.Request) {
 		incoming := subprocess.GetIncoming(b)
 		w.WriteHeader(200);
 		w.Write([]byte(incoming));
-		writeLog(r.Method, 200, startTime)
-		return
+		writeLog(r.Method, 200, startTime);
+		return;
 	}
 	
 	// Run request
-	bodyContent, err := subprocess.Request(b)
+	bodyContent, err := subprocess.Request(b);
 	if err != nil {
 		w.WriteHeader(500);
 		w.Write([]byte("Internal server error: " + err.Error() + "\n"));
-		return
+		writeLog(r.Method, 500, startTime);
+		return;
 	}
 	
 	// Request returned something
 	w.WriteHeader(200);
 	w.Write([]byte(bodyContent));
-	
-	// Log the request
-	log.Default().Print("HTTP Request: ", bearer, " " , 200, " ", string(body))
+	log.Default().Print("HTTP Request: ", bearer, " " , 200, " ", string(body));
 }

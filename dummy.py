@@ -6,8 +6,11 @@
 import sys
 import json
 
-print(json.dumps({"method":"receive","params":{"envelope":{"source":"67a13c3e-8d29-2539-ce8e-41129c349d6d"},"data":"stuff"}}))
+# Stress-testing incoming messages
+for i in range(2000):
+	print(json.dumps({"method":"receive","params":{"envelope":{"source":"67a13c3e-8d29-2539-ce8e-41129c349d6d"},"data":i}}))
 
+# Reply to incoming messages
 for line in sys.stdin:
 	try:
 		data = json.loads(line.strip())

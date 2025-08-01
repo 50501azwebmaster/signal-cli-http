@@ -3,7 +3,6 @@ package main
 /* This is the main function of this program. It handles setting everything up */
 
 import (
-	"fmt"
 	"signal-cli-http/args"
 	"signal-cli-http/auth"
 	"signal-cli-http/subprocess"
@@ -37,6 +36,7 @@ func main() {
 	err = subprocess.SetupCMD(binary);
 	if err != nil {log.Default().Print("Error running subprocess at ", binary, ": ", err); return;};
 	log.Default().Print("Started subprocess at ", binary);
+	subprocess.StartCacheClear();
 	
 	// HTTP Listen
 	port, portSet := args.GetHTTPPort();
@@ -50,7 +50,7 @@ func main() {
 	log.Default().Print("Startup tasks complete!");
 	
 	time.Sleep(time.Millisecond * 500);
-	fmt.Println(subprocess.GetIMC())
 	
+	// Needed to not kill program
 	wg.Wait();
 }

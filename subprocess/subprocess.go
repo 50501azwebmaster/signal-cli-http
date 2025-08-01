@@ -8,7 +8,9 @@ import (
 	"errors"
 	"os"
 	"os/exec"
+	"os/signal"
 	"sync"
+	"syscall"
 
 	"github.com/creack/pty"
 )
@@ -36,8 +38,20 @@ func SetupCMD(binaryLocation string) error {
 	reader = bufio.NewScanner(f);
 	go readCMD();
 	
+	// Make sure cmd is killed when this program is
+	go catchKillSignal();
+	
 	// No problem
 	return nil;
+}
+
+/* Catch signals from this program to kill child */
+func catchKillSignal() {
+	signalCatcher := make(chan os.Signal, 1)
+	signal.Notify(signalCatcher, syscall.SIGINT, syscall.SIGTERM, syscall.SIGILL)
+	<- signalCatcher;
+	cmd.Process.Kill();
+	os.Exit(0);  // Without this the process never exits
 }
 
 /* Continuously reads the next line up to 40960 bytes and forwards it to response */
