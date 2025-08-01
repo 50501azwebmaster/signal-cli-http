@@ -3,11 +3,13 @@ package main
 /* This is the main function of this program. It handles setting everything up */
 
 import (
+	"fmt"
 	"signal-cli-http/args"
 	"signal-cli-http/auth"
 	"signal-cli-http/subprocess"
 	"signal-cli-http/web"
-	
+	"time"
+
 	"log"
 	"sync"
 )
@@ -46,5 +48,9 @@ func main() {
 	log.Default().Print("Listening on port ", port);
 	
 	log.Default().Print("Startup tasks complete!");
+	
+	time.Sleep(time.Millisecond * 500);
+	fmt.Println(subprocess.GetIMC())
+	
 	wg.Wait();
 }

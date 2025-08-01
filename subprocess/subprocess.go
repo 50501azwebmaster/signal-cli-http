@@ -4,11 +4,12 @@ package subprocess
 
 import (
 	"bufio"
+	"encoding/json"
 	"errors"
 	"os"
 	"os/exec"
 	"sync"
-	
+
 	"github.com/creack/pty"
 )
 
@@ -39,14 +40,38 @@ func SetupCMD(binaryLocation string) error {
 	return nil;
 }
 
+/* Continuously reads the next line up to 40960 bytes and forwards it to response */
 func readCMD() {
-	var maxCapacity int = 4096;
+	var maxCapacity int = 40960;
 	buf := make([]byte, maxCapacity);
 	reader.Buffer(buf, maxCapacity);
 	
-	for reader.Scan() {Response(reader.Text())}
+	for reader.Scan() {
+		// Read the line
+		line := reader.Text();
+		
+		// Unmarshal the JSON
+		var unmarshaledJSON any;
+		if err := json.Unmarshal([]byte(line), &unmarshaledJSON); err != nil {continue}
+		
+		// Make sure it's a JSON map
+		unmarshaledJSONMap, ok := unmarshaledJSON.(map[string]any)
+		if !ok {continue}
+		
+		// Get method
+		method, ok := unmarshaledJSONMap["method"];
+		if !ok {continue}
+		
+		// Redirect to handlers based off method
+		if method == "receive" {
+			handleIncoming(line, unmarshaledJSONMap);
+		} else {
+			handleResponse(line, unmarshaledJSONMap);
+		}
+	}
 }
 
+/* Write a line into the subprocess */
 func writeCMD(line string) (ok bool) {
 	fLock.Lock();
 	if line[len(line)-1] != '\n' {line += "\n"}
