@@ -21,6 +21,10 @@ var f *os.File;
 var fLock sync.RWMutex;
 var reader *bufio.Scanner;
 
+// This is here to ignore lines written to STDIN echoed back through STDOUT
+var ignoreEcho map[string]bool = make(map[string]bool);
+var ignoreEchoMutex sync.RWMutex;
+
 func SetupCMD(binaryLocation string) error {
 	// Avoid double set-up
 	if cmdStarted {return errors.New("cmd already started")};
@@ -64,6 +68,13 @@ func readCMD() {
 		// Read the line
 		line := reader.Text();
 		
+		// Check for echo
+		ignoreEchoMutex.Lock();
+		_, exists := ignoreEcho[line];
+		if exists {delete(ignoreEcho, line)}
+		ignoreEchoMutex.Unlock();
+		if exists {continue}
+		
 		// Unmarshal the JSON
 		var unmarshaledJSON any;
 		if err := json.Unmarshal([]byte(line), &unmarshaledJSON); err != nil {continue}
@@ -74,22 +85,26 @@ func readCMD() {
 		
 		// Get method
 		method, ok := unmarshaledJSONMap["method"];
-		if !ok {continue}
-		
-		// Redirect to handlers based off method
-		if method == "receive" {
+		if ok && method == "receive" {
 			handleIncoming(line, unmarshaledJSONMap);
-		} else {
-			handleResponse(line, unmarshaledJSONMap);
+			continue;
 		}
+	
+		handleResponse(line, unmarshaledJSONMap);
 	}
 }
 
 /* Write a line into the subprocess */
 func writeCMD(line string) (ok bool) {
+	// Write into ignoreEcho map so reader can skip the echoed line
+	ignoreEchoMutex.Lock();
+	ignoreEcho[line] = true;
+	ignoreEchoMutex.Unlock();
+
 	fLock.Lock();
 	if line[len(line)-1] != '\n' {line += "\n"}
 	f.WriteString(line);
 	fLock.Unlock();
+	
 	return true;
 }
