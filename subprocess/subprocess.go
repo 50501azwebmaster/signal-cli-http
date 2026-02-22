@@ -9,6 +9,7 @@ import (
 	"os"
 	"os/exec"
 	"os/signal"
+	"strings"
 	"sync"
 	"syscall"
 
@@ -58,15 +59,34 @@ func catchKillSignal() {
 	os.Exit(0);  // Without this the process never exits
 }
 
-/* Continuously reads the next line up to 40960 bytes and forwards it to response */
+/* Continuously reads the next line up to 10MiB and forwards it to response */
 func readCMD() {
-	var maxCapacity int = 40960;
-	buf := make([]byte, maxCapacity);
-	reader.Buffer(buf, maxCapacity);
+	/* Holds temporary stdin data */
+	buf := make([]byte, 16384);
+	/* Holds the read data */
+	var outBuffer string;
 	
-	for reader.Scan() {
-		// Read the line
-		line := reader.Text();
+	for  {
+		// Read up to 16384 bytes
+		n, err := f.Read(buf)
+		if err != nil {break;}
+		if n == 0 {continue;}
+		
+		// Append read bytes to buffer
+		outBuffer = outBuffer + string(buf[:n]);
+		
+		// Check for line ending
+		newLineIndex := strings.Index(outBuffer, "\n");
+		if newLineIndex < 0 {continue}
+		
+		// Extract line from buffer
+		line := outBuffer[:newLineIndex];
+		// Adjust for "\r\n" line ending
+		if line[len(line)-1] == '\r' {
+			line = line[:len(line)-1]
+		}
+		// And remove line from buffer
+		outBuffer = outBuffer[newLineIndex+1:];
 		
 		// Check for echo
 		ignoreEchoMutex.Lock();
